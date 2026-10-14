@@ -1,0 +1,21 @@
+**/build/
+**/build-*/
+**/cmake-build-*/
+**/target/
+**/generated/
+**/out/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local coordination history; keep it on disk, outside the repository.
+/SESSIONS.md
+/assignments/

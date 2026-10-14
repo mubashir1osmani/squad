@@ -1,0 +1,27 @@
+[package]
+name = "quad-groundstation"
+version = "0.1.0"
+edition = "2021"
+description = "Offline command replay and opt-in localhost MANUAL_CONTROL for the FPGA quadcopter ground station"
+publish = false
+
+[lib]
+name = "quad_groundstation"
+path = "src/lib.rs"
+
+[[bin]]
+name = "quad-groundstation"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+ctrlc = "3.4"
+mavlink = { version = "0.19", default-features = false, features = ["std", "dialect-common"] }
+
+[dependencies.gilrs]
+version = "0.11"
+optional = true
+
+[features]
+default = []
+gamepad = ["dep:gilrs"]

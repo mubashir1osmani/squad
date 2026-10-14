@@ -1,0 +1,93 @@
+{
+  "units": "mm",
+  "prototype_only": true,
+  "flight_tested": false,
+  "structural_analysis_performed": false,
+  "diagonal_motor_spacing_mm": 400,
+  "adjacent_motor_spacing_mm": 282.843,
+  "planar_gap_between_nominal_10inch_prop_discs_mm": 28.843,
+  "assembled_solid_collisions": 0,
+  "total_solid_volume_cm3": 242.969,
+  "solid_petg_mass_g_at_1_27g_cm3": 308.6,
+  "mass_note": "Full-density CAD volume; actual slicer mass depends on walls and infill. Hardware excluded.",
+  "stl_validation": [
+    {
+      "file": "01_bottom_plate_print_1.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 1,
+      "triangles": 8580,
+      "dimensions_mm": [
+        120.0,
+        120.0,
+        3.0
+      ],
+      "solid_volume_cm3": 40.887
+    },
+    {
+      "file": "02_top_clamp_print_1.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 1,
+      "triangles": 4960,
+      "dimensions_mm": [
+        120.0,
+        120.0,
+        3.0
+      ],
+      "solid_volume_cm3": 29.503
+    },
+    {
+      "file": "03_arm_print_4.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 1,
+      "triangles": 3240,
+      "dimensions_mm": [
+        178.0,
+        36.0,
+        8.0
+      ],
+      "solid_volume_cm3": 34.402
+    },
+    {
+      "file": "04_electronics_tray_print_1.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 1,
+      "triangles": 4472,
+      "dimensions_mm": [
+        130.0,
+        110.0,
+        3.0
+      ],
+      "solid_volume_cm3": 32.503
+    },
+    {
+      "file": "05_spacer_15mm_print_4.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 1,
+      "triangles": 768,
+      "dimensions_mm": [
+        8.0,
+        8.0,
+        15.0
+      ],
+      "solid_volume_cm3": 0.617
+    },
+    {
+      "file": "06_optional_four_arm_print_plate.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_components": 4,
+      "triangles": 12960,
+      "dimensions_mm": [
+        178.0,
+        162.0,
+        8.0
+      ],
+      "solid_volume_cm3": 137.606
+    }
+  ]
+}
