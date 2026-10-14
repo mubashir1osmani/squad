@@ -41,14 +41,6 @@ Linux gamepad support requires `pkg-config` and `libudev` development files (`pk
 
 GitHub Actions runs `scripts/check.py --gamepad` on Ubuntu and macOS and saves the integration reports as artifacts.
 
-## Printable frame
-
-- [Download the STL package](hardware/printable-frame/DIY_400_quadcopter_STLs.zip) or browse the [individual STLs](hardware/printable-frame/stl/).
-- Follow the [print quantities, dimensions, and assembly guide](hardware/printable-frame/README.md).
-- The [parametric source](hardware/printable-frame/generate_frame.py) can regenerate the parts; its separate Python dependencies are listed beside it.
-
-The parts fit a 220 × 220 mm bed. Mesh checks cover geometry, not strength or flightworthiness. Motors, battery, flight controller, FPGA, and camera have not been selected.
-
 ## Roadmap
 
 1. Complete physical PS4 and PX4 SITL checks, and address the noisy-motion limitation.
