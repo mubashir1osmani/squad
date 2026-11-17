@@ -1,0 +1,8 @@
+{
+  "mode": "rates",
+  "horizon_steps": 1,
+  "forecast_stride": 5,
+  "hidden_units": 32,
+  "epochs": 40,
+  "patience": 6
+}

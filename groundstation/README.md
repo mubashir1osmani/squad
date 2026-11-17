@@ -163,3 +163,57 @@ L1 is local authority only. It is not copied into MAVLink button bits.
 | `control` against `127.0.0.1` | This process can emit and decode `MANUAL_CONTROL` |
 | PX4 SITL | Not run |
 | Physical PS4 controller | Not run |
+
+## Neural prediction capture and dashboard
+
+`predictions` is a separate, read-only telemetry path using [the v1 JSONL contract](../docs/predictions.md). It accepts a file or `--input -` for stdin, writes validated packets to a new capture, and creates a standalone HTML replay dashboard. Both output paths must be new; existing files and symlinks are rejected. It never constructs an aircraft command.
+
+An interface-only fixture exercises trajectory plotting and an invalid measurement. Its numbers are handwritten test data, not the output of a trained network:
+
+```sh
+cargo run --manifest-path groundstation/Cargo.toml --quiet -- predictions \
+  --input groundstation/examples/predictions-trajectory.jsonl \
+  --capture /tmp/quad-predictions-capture.jsonl \
+  --dashboard /tmp/quad-predictions-replay.html
+```
+
+Open `/tmp/quad-predictions-replay.html` in a modern browser. The file is self-contained and needs no service, internet access, or remote assets. The replay timeline and Play control show each retained packet, including invalid/rejected events. Playback uses source-clock intervals, with long gaps capped at two seconds. Select the file emitted by `python -m nn groundstation-demo` or `python -m nn groundstation-export` instead to inspect actual neural outputs; see [the neural component guide](../nn/README.md) for model/data prerequisites and commands.
+
+The top-down map uses east horizontally and north vertically. Planned input route, neural predicted motion, and observed anchor history have separate legends. The context panel gives the source, model, anchor timestamp, horizon, altitude (negative NED down), validity and training-range warning. The table includes all predicted body rates, positions and velocities. Rates-only packets explicitly say the model does not predict a flight path, and no position path is invented. `software_fixture` is visibly labelled **synthetic**; source labels describe provenance, not accuracy or flight readiness.
+
+Validation requires all contract fields, finite three-component vectors, fixed model/source/frames, increasing packet anchors, and 1..128 strictly future prediction targets. Trajectory packets need observed position, position/velocity outputs, and matching planned timestamps; rates packets require null positions/velocity and no planned path. Explicit invalid packets need a reason and empty paths and are saved. Malformed or contradictory lines are rejected with line-numbered errors and clear the current forecast. Processing continues, preserving subsequent valid packets; any rejected line makes the final exit status nonzero. Source-clock timestamps retain all 64 bits in the capture and dashboard.
+
+Input lines are capped at 1 MiB, including lines without a newline. The full validated capture streams to disk, preserving each accepted source JSON line exactly (including numeric precision), followed by LF. Replay history defaults to 2,048 events and is additionally capped at 32 MiB; `--max-packets 1..10000` changes the count limit. The dashboard reports omitted older events. Regenerate a replay from a capture whenever needed, using new output paths.
+
+### Optional live display
+
+Only `--serve` opens a prediction listener. It must be a numeric loopback address; public/wildcard binds and hostnames are rejected. For example, use a producer on stdin:
+
+```sh
+python -m nn groundstation-demo --output /tmp/quad-nn-demo
+python -m nn groundstation-export \
+  --model /tmp/quad-nn-demo/model \
+  --input /tmp/quad-nn-demo/input.csv \
+  --metadata /tmp/quad-nn-demo/input.metadata.json \
+  --source-kind software_fixture --pace --output - | \
+  cargo run --manifest-path groundstation/Cargo.toml --quiet -- predictions \
+    --input - \
+    --capture /tmp/quad-live-capture.jsonl \
+    --dashboard /tmp/quad-live-replay.html \
+    --serve 127.0.0.1:8080 \
+    --stale-ms 1000
+```
+
+Open the printed localhost URL. HTTP serves a read-only dashboard and `/snapshot` only. It polls every 250 ms. A valid finite file finishes immediately: the live view correctly shows **end of stream / disconnected** and removes the current path. Use a continuously running JSONL producer for ongoing live motion; file playback is available through the saved replay.
+
+A stale receipt (default 1,000 ms; configurable 1..60000), rejected packet, explicit invalid prediction, or ended/failed input removes the current predicted/planned path. Observed history remains history. A lost HTTP connection also clears the browser's current path. Receipt freshness does not rewrite the source timestamp. Live session history in an open browser retains up to 512 sampled events and 32 MiB; it may skip packets between polls. The saved replay contains the server's bounded event history. Live and replay views are explicitly labelled; the Live button returns from history inspection to the current source state.
+
+The server stays available after input ends. Press Ctrl-C to stop it and finish the standalone replay file. The capture is flushed per accepted packet. None of this enables or changes manual control, arming, takeoff or motor output.
+
+Additional dashboard logic checks, with optional Node.js:
+
+```sh
+node groundstation/tests/dashboard_runtime.cjs
+```
+
+These use a DOM/canvas test double to check timeline/Play actions, rates-only and trajectory rendering data, labels, invalid/stale clearing, large source timestamps and extreme finite coordinates. They do not constitute a browser screenshot/layout check.

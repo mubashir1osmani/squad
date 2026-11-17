@@ -58,3 +58,78 @@ This was not hidden by changing fixtures, dropping failing rows, or weakening th
 - Physical DualShock 4 stick signs and end-to-end gamepad behavior.
 - Camera capture, calibration, gyro/range alignment, or conversion into PX4 optical-flow measurements.
 - HLS synthesis, FPGA timing/resources, bitstream deployment, aircraft assembly, or flight.
+
+## Neural capture and path display — 2026-11-16
+
+The neural project is consolidated under `nn/`, with its original Desktop
+directory preserved. Python exports validated prediction JSONL; the Rust ground
+station captures accepted source bytes and renders separate planned, predicted
+and observed position paths. The optional live listener is read-only and
+loopback-only. Invalid, rejected, stale and disconnected sources clear the
+current forecast.
+
+On this macOS arm64 host, the following full check passed using the project
+virtual environment and Rust 1.98.1:
+
+```sh
+PATH=/Users/mubashirosmani/.rustup/toolchains/1.98.1-aarch64-apple-darwin/bin:$PATH \
+  .venv/bin/python scripts/check.py --neural
+```
+
+- Both C++ CTest suites passed, with vision sanitizers enabled.
+- Rust formatting and strict Clippy passed; 51 library, 7 original CLI and
+  6 prediction CLI tests passed (64 total).
+- All 42 neural tests passed in 15.184 seconds. This includes both model modes,
+  causal inputs, provenance/checksums, malformed/stale inputs, shape validation,
+  exact integer timestamps, saved real-log inference and fixture training.
+- All seven original integration scenarios reproduced their documented result,
+  including the visible `image_noise` limitation (2/6 valid motions covered).
+- Fresh fixture training produced 600 exported packets: 593 valid trajectory
+  forecasts and seven invalid warmup packets. Rust captured all 600 with no
+  rejections; parsed capture matched the source exactly. Synthetic provenance
+  and a generated standalone dashboard were verified.
+
+Evidence is local and ignored by Git: `build/host-neural-check.log`,
+`build/integration/run-h6zx4wqi/` and
+`build/neural-integration/run-e97pw9o4/`.
+
+Actual headless Chromium verification also passed. Offline replay was checked
+at 1440×1100 and 390×844, including timeline, Play, warmup clearing, separate
+forecast drawing and mobile overflow. A live browser check used the real paced
+Python exporter into Rust stdin: a valid ten-point forecast appeared, pausing
+the exporter cleared it as stale, resuming restored it, and EOF cleared it as
+disconnected. All 600 captured source packets were byte-identical, final replay
+opened successfully, and no browser JavaScript errors occurred. Live evidence,
+screenshots and result metadata are in `build/neural-live-rMEdsE/`; offline
+screenshots are `build/neural-dashboard-desktop.png` and
+`build/neural-dashboard-mobile.png`. The additional DOM/canvas regression script
+`groundstation/tests/dashboard_runtime.cjs` also passed.
+
+The existing IDSIA model produced 6,369 valid rate forecasts from 8,068 source
+anchors, with null position/velocity and no position path. Its prior validation
+MAE remains worse than persistence. The displayed trajectory demo uses an
+actually trained synthetic model and a separate display route; it is not
+evidence of real-flight path accuracy. Real trajectory training, aircraft sensor
+acquisition, autonomous route selection/control, PX4 SITL, HLS synthesis and
+FPGA execution remain unverified. Optional gamepad feature checks were not
+rerun for this neural-only extension; the earlier result above is historical.
+
+### Source publication check — 2026-11-17
+
+Before publishing the neural source, `.venv/bin/python scripts/check.py --neural`
+passed again with Rust 1.98.1 on this host: both C++ suites, Rust formatting and
+strict Clippy, all 64 Rust tests, all 42 neural tests, the seven existing
+integration scenarios and a newly trained 600-packet trajectory capture. The
+documented noisy-image coverage limitation remains unchanged. Evidence is in
+`build/neural-push-check.log`, `build/integration/run-b3egjqn4/` and
+`build/neural-integration/run-vrn8z01u/`.
+
+A separate source-only copy, excluding local datasets, saved models and results,
+ran the neural suite successfully: 41 tests passed and the optional saved-IDSIA
+regression was explicitly skipped. Both forecast modes and actual fixture-model
+training still ran. That regression runs normally when its local model and
+flight log are available; incomplete/corrupt artifacts still fail validation.
+Source-only evidence is in `build/neural-source-only-check.log` and
+`build/neural-source-only-pl7wk7wi/`. The Node dashboard runtime regression also
+passed. Data, weights, generated results, virtual environments and build outputs
+remain excluded from Git.

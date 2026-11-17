@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "timebase": "shared",
+  "validity_policy": "finite_range_and_optional_source_flags",
+  "imu_timestamp_column": "timestamp_us",
+  "imu_time_unit": "us",
+  "motor_timestamp_column": "timestamp_us",
+  "motor_time_unit": "us",
+  "gyro_columns": ["gyro_x_rad_s", "gyro_y_rad_s", "gyro_z_rad_s"],
+  "gyro_units": "rad/s",
+  "imu_to_frd": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+  "gyro_valid_column": "gyro_valid",
+  "motor_valid_column": "motor_valid",
+  "actuator_kind": "normalized_output",
+  "motor_channels": [
+    {"position": "front_left", "column": "motor_0", "minimum": 0, "maximum": 1},
+    {"position": "front_right", "column": "motor_1", "minimum": 0, "maximum": 1},
+    {"position": "rear_right", "column": "motor_2", "minimum": 0, "maximum": 1},
+    {"position": "rear_left", "column": "motor_3", "minimum": 0, "maximum": 1}
+  ]
+}

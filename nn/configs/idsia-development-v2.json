@@ -1,0 +1,28 @@
+{
+  "experiment": "Four-fold whole-recording IDSIA development comparison",
+  "acknowledge_exposed_development_data": true,
+  "window": {
+    "sample_period_us": 10000,
+    "interval_tolerance_us": 0,
+    "history_steps": 8,
+    "horizon_steps": 5,
+    "horizon_tolerance_us": 0,
+    "max_motor_age_us": 15000,
+    "max_gyro_age_us": 15000
+  },
+  "training": {
+    "seed": 42,
+    "hidden_units": 32,
+    "epochs": 250,
+    "patience": 30,
+    "batch_size": 256,
+    "learning_rate": 0.001,
+    "l2": 0.0001,
+    "ridge_penalty": 10.0
+  },
+  "protocol": "Fold=(run_number-1)%4. Score fold k; validate fold (k+1)%4; train remaining two. Never split one recording. All three manoeuvre families present in each role. Both fixed NN variants use the same training/validation/scoring windows. Every recording scored once by a model that did not train or early-stop on it. Previously exposed recordings mean all scores remain developmental.",
+  "variants": {
+    "mlp_original": "Original per-axis target standardization, random output initialization, validation normalized MSE",
+    "mlp_shared": "Shared residual scale with zero origin, zero initial residual output, validation MAE proportional to physical-unit MAE; epoch zero is eligible"
+  }
+}

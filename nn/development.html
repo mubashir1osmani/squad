@@ -1,0 +1,50 @@
+<section id="idsia-development-comparison" data-viz-composition>
+  <style>
+    #idsia-development-comparison {display:flex;flex-direction:column;gap:calc(var(--font-size-base)*1)}
+  </style>
+  <h2>Prediction error by recording</h2>
+  <label class="form-label">Manoeuvres<select class="form-select" data-role="family" disabled>
+    <option value="all">All manoeuvres</option>
+    <option value="chirp">Chirp</option>
+    <option value="random">Random</option>
+    <option value="square">Square</option>
+  </select></label>
+  <div data-role="comparison" class="tabular-nums" aria-live="polite"></div>
+  <div data-viz-container></div>
+  <div class="text-small text-muted">50 ms receiver-clock prediction · Development data · Lower error is better</div>
+  __CHART_CONFIGS__
+  <script type="application/json" data-role="summary">__SUMMARY__</script>
+</section>
+<script type="module">
+  const root=document.getElementById('idsia-development-comparison');
+  const control=root.querySelector('[data-role="family"]');
+  const comparison=root.querySelector('[data-role="comparison"]');
+  const configs=new Map([...root.querySelectorAll('[data-viz-chart]')].map(element=>{
+    const config=JSON.parse(element.textContent);return [config.id,config];
+  }));
+  const summary=JSON.parse(root.querySelector('[data-role="summary"]').textContent);
+  let family='all', chart=null;
+  function render(){
+    control.value=family;
+    if(chart)chart.config=configs.get(family);
+    const item=summary[family];
+    const difference=100*(1-item.revised/item.persistence);
+    comparison.textContent=`${item.windows.toLocaleString()} predictions · Revised NN ${item.revised.toFixed(4)} rad/s · Persistence ${item.persistence.toFixed(4)} rad/s · ${Math.abs(difference).toFixed(1)}% ${difference>=0?'lower':'higher'} error`;
+  }
+  function restore(snapshot){
+    const incoming=snapshot?.modelContent;
+    if(incoming?.view==='idsia-development-v2' && configs.has(incoming.family))family=incoming.family;
+    render();
+  }
+  restore(window.openai?.widgetState);
+  window.addEventListener('openai:set_globals',event=>restore(event.detail?.globals?.widgetState));
+  try{
+    const {mountChart}=await import('https://persistent.oaistatic.com/plugins/visualize/charts/1.1.6/element.js');
+    chart=mountChart(root.querySelector('[data-viz-container]'),configs.get(family));
+    control.addEventListener('change',()=>{
+      family=control.value;render();
+      window.openai?.setWidgetState?.({modelContent:{view:'idsia-development-v2',family},privateContent:null})?.catch(()=>{});
+    });
+    control.disabled=false;render();
+  }catch(error){comparison.textContent='Chart unavailable. Per-flight values are saved in summary.json.';}
+</script>

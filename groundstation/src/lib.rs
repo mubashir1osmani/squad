@@ -14,6 +14,7 @@ pub mod gamepad_io;
 pub mod mapping;
 pub mod normalize;
 pub mod playback;
+pub mod predictions;
 pub mod rate_limit;
 pub mod replay;
 pub mod session;

@@ -37,6 +37,8 @@ enum Command {
     Control(ControlArgs),
     /// Read an optional gamepad and stream MANUAL_CONTROL on localhost.
     Gamepad(GamepadArgs),
+    /// Validate/capture neural JSONL telemetry and create an offline replay dashboard.
+    Predictions(quad_groundstation::predictions::PredictionArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -171,6 +173,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         }
         Command::Gamepad(args) => run_gamepad(args),
+        Command::Predictions(args) => quad_groundstation::predictions::run(args),
     }
 }
 

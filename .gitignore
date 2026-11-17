@@ -19,3 +19,8 @@
 # Local coordination history; keep it on disk, outside the repository.
 /SESSIONS.md
 /assignments/
+
+# Local neural training data and generated evaluation/model outputs.
+/nn/data/
+/nn/results/
+/nn/models/

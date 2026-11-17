@@ -1,0 +1,21 @@
+{
+  "window": {
+    "sample_period_us": 10000,
+    "interval_tolerance_us": 2000,
+    "history_steps": 4,
+    "horizon_steps": 5,
+    "horizon_tolerance_us": 2500,
+    "max_motor_age_us": 15000
+  },
+  "training": {
+    "seed": 42,
+    "hidden_units": 24,
+    "epochs": 200,
+    "patience": 25,
+    "batch_size": 128,
+    "learning_rate": 0.002,
+    "l2": 0.00001,
+    "ridge_penalty": 1.0
+  },
+  "purpose": "Initial experiment settings. Cadence and horizon must be reviewed for each actual data source; these are not aircraft performance requirements."
+}

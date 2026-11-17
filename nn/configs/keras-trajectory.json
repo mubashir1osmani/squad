@@ -1,0 +1,8 @@
+{
+  "mode": "trajectory",
+  "horizon_steps": 10,
+  "forecast_stride": 5,
+  "hidden_units": 64,
+  "epochs": 50,
+  "patience": 8
+}

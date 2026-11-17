@@ -1,0 +1,57 @@
+{
+  "experiment": "IDSIA native receipt-clock angular-rate prediction, version 1",
+  "native_import": {
+    "max_status_age_us": 100000,
+    "flying_mask": 16,
+    "excluded_status_mask": 96,
+    "clock": "ROS recorder receipt time; integer nanoseconds converted relative to per-run origin",
+    "rate_source": "/cf/image_odom twist.twist.angular.{x,y,z}; onboard body-rate estimate, rad/s",
+    "source_body_frame": "FLU, following documented Crazyflie convention; logger mounting/version not independently confirmed",
+    "rotation_to_frd": [[1,0,0],[0,-1,0],[0,0,-1]],
+    "motor_columns_in_canonical_order": ["thrust.m4","thrust.m1","thrust.m2","thrust.m3"],
+    "motor_scale": 65535,
+    "actuator_kind": "normalized_output"
+  },
+  "flights": {
+    "square_20251017_run1": "train",
+    "square_20251017_run2": "train",
+    "square_20251017_run3": "train",
+    "square_20251017_run4": "train",
+    "square_20251017_run5": "train",
+    "chirp_20251017_run1": "validation",
+    "chirp_20251017_run2": "validation",
+    "chirp_20251017_run3": "validation",
+    "chirp_20251017_run4": "validation",
+    "random_20251017_run1": "test",
+    "random_20251017_run2": "test",
+    "random_20251017_run3": "test",
+    "random_20251017_run4": "test"
+  },
+  "window": {
+    "sample_period_us": 10000,
+    "interval_tolerance_us": 0,
+    "history_steps": 8,
+    "horizon_steps": 5,
+    "horizon_tolerance_us": 0,
+    "max_motor_age_us": 15000,
+    "max_gyro_age_us": 15000
+  },
+  "training": {
+    "seed": 42,
+    "hidden_units": 32,
+    "epochs": 250,
+    "patience": 30,
+    "batch_size": 256,
+    "learning_rate": 0.001,
+    "l2": 0.0001,
+    "ridge_penalty": 10.0
+  },
+  "selection_policy": "First real-data experiment: fixed architecture/horizon; early stopping on normalized validation MSE. Compare persistence, ridge and NN on validation. Freeze before one final test; no test-driven tuning.",
+  "limitations": [
+    "All recordings from one aircraft and date; manoeuvre families separated across splits: square train, chirp validation, random test",
+    "Test uses unseen random manoeuvre recordings, not the paper's Melon split",
+    "Forecast concerns observed telemetry arrival clock, not independently verified sensor acquisition timing",
+    "Logged thrust channels are normalized commands, not measured RPM or proven applied ESC duty",
+    "No sensor-health guarantee from finite/range/flying flags"
+  ]
+}

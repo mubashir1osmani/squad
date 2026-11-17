@@ -1,0 +1,44 @@
+<section id="idsia-prediction-inspection" data-viz-composition>
+  <style>
+    #idsia-prediction-inspection {display:flex;flex-direction:column;gap:calc(var(--font-size-base)*1)}
+    #idsia-prediction-inspection .error-values {display:flex;flex-wrap:wrap;gap:calc(var(--font-size-base)*1.2)}
+    #idsia-prediction-inspection .error-value {display:flex;flex-direction:column;gap:calc(var(--font-size-base)*.25)}
+  </style>
+  <h2>IDSIA held-out flight predictions</h2>
+  <div class="viz-controls">
+    <label class="form-label">Test flight<select class="form-select" data-role="flight" disabled></select></label>
+    <label class="form-label">Axis<select class="form-select" data-role="axis" disabled><option value="0">Roll</option><option value="1">Pitch</option><option value="2">Yaw</option></select></label>
+  </div>
+  <div class="error-values tabular-nums" data-role="errors" aria-live="polite"></div>
+  <div data-viz-container></div>
+  <div class="text-small text-muted" data-role="status" aria-live="polite">Loading held-out predictions…</div>
+  __CHART_CONFIGS__
+  <script type="application/json" data-role="summary">__SUMMARY__</script>
+</section>
+<script type="module">
+  const root = document.getElementById('idsia-prediction-inspection');
+  const get = name => root.querySelector(`[data-role="${name}"]`);
+  const summary = JSON.parse(get('summary').textContent);
+  const configs = new Map([...root.querySelectorAll('[data-viz-chart]')].map(el => {const c=JSON.parse(el.textContent);return [c.id,c];}));
+  const flights = Object.keys(summary.flights);
+  const flightSelect=get('flight'), axisSelect=get('axis');
+  for (const [i,id] of flights.entries()) {const option=document.createElement('option');option.value=id;option.textContent=`Random flight ${i+1}`;flightSelect.append(option);}
+  let state={flight:flights[0],axis:0}, chart=null;
+  const valid = value => value && flights.includes(value.flight) && Number.isInteger(value.axis) && value.axis>=0 && value.axis<=2;
+  function restore(snapshot) {const incoming=snapshot?.modelContent;if(valid(incoming))state={flight:incoming.flight,axis:incoming.axis};flightSelect.value=state.flight;axisSelect.value=String(state.axis);if(chart)render();}
+  function render() {
+    chart.config=configs.get(`${state.flight}-${state.axis}`);
+    const selected=summary.flights[state.flight];get('errors').replaceChildren();
+    for(const name of ['Neural network','Ridge','Persistence']){const box=document.createElement('div');box.className='error-value';const label=document.createElement('span');label.className='text-small text-muted';label.textContent=`${name} MAE`;const value=document.createElement('span');value.textContent=`${selected.mae_by_axis[name][state.axis].toFixed(4)} rad/s`;box.append(label,value);get('errors').append(box);}
+    get('status').textContent=`${summary.horizon_ms} ms forecast · ${selected.windows.toLocaleString()} scored windows · ${selected.displayed_windows} displayed · receiver clock`;
+  }
+  function changed() {state={flight:flightSelect.value,axis:Number(axisSelect.value)};render();window.openai?.setWidgetState?.({modelContent:state,privateContent:null})?.catch(()=>{});}
+  restore(window.openai?.widgetState);
+  window.addEventListener('openai:set_globals',event=>{const snapshot=event.detail?.globals?.widgetState;if(snapshot)restore(snapshot);});
+  try {
+    const {mountChart}=await import('https://persistent.oaistatic.com/plugins/visualize/charts/1.2.3/element.js');
+    chart=mountChart(root.querySelector('[data-viz-container]'),configs.get(`${state.flight}-${state.axis}`));
+    flightSelect.addEventListener('change',changed);axisSelect.addEventListener('change',changed);
+    flightSelect.disabled=false;axisSelect.disabled=false;render();
+  } catch(error) {get('status').textContent='The plot could not load. Full-resolution predictions are retained in predictions.csv.';}
+</script>

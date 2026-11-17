@@ -46,3 +46,10 @@ t_us is the second frame's time, dt_us is its positive difference from the first
 - Each component keeps build outputs within its own directory and does not require another component to build.
 
 If a shared change is necessary, send the proposed change to the coordinator. Do not silently diverge.
+
+## Neural prediction telemetry
+
+The Python neural component and Rust ground station share the versioned
+[prediction JSON Lines contract](predictions.md). This observation-only path
+records forecasts and displays planned versus predicted motion. It does not
+change the manual-command CSV, send setpoints, or add arming/takeoff behavior.

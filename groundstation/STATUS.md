@@ -91,3 +91,23 @@ cargo run --manifest-path groundstation/Cargo.toml --features gamepad --quiet --
 - Operator-started PX4 SITL check of the offboard port, `COM_RC_IN_MODE`, and a manual arm.
 - DualShock 4 pass to confirm gilrs axis signs and the L1 latch.
 - Confirm the installed PX4 version still decodes `z` as [0, 1000] before any aircraft test.
+
+## Neural prediction display — 2026-11-16
+
+Added `quad-groundstation predictions --input PATH|- --capture NEW.jsonl --dashboard NEW.html`, with optional explicitly enabled `--serve 127.0.0.1:PORT`. This is read-only JSONL telemetry using `docs/predictions.md`; it does not connect predictions to aircraft control.
+
+Implemented strict required-field/finite-vector/schema validation; fixed stream identity/frames; monotonic anchors and strictly future ordered targets; trajectory position/velocity and matching planned points; rates-only null positions; explanatory invalid packets; 1 MiB bounded line reading; streaming capture; create-new outputs; and replay history capped by both event count and 32 MiB. Rejected lines are reported and clear the display, valid capture continues, and final status is nonzero. Explicit invalid packets remain in the capture. Full u64 source timestamps are preserved, including in dashboard arithmetic. Capture retains original validated JSON bytes and numeric precision; the display parser enables round-trip float parsing.
+
+The self-contained dashboard has separate planner-input and NN-motion paths, observed anchor history, an east/north map, altitude, prediction horizon, body-rate values/table, model/source labels and training-range warnings. Synthetic fixtures are visibly labelled. Offline timeline/Play and optional loopback HTTP snapshots are implemented. Invalid, rejected, stale and ended/failed sources remove the current forecast. The read-only server remains available after EOF until Ctrl-C and then finalizes the offline replay. Browser live history is sampled and bounded; disk capture preserves every accepted packet.
+
+Verification on this host (Rust 1.98.1):
+
+- `cargo fmt --check`: passed.
+- Default `cargo test`: 51 library tests, 7 original CLI tests, and 6 prediction CLI tests passed (64 total).
+- `cargo clippy --all-targets -- -D warnings`: passed.
+- New CLI test exercised stdin and loopback HTTP, real malformed/invalid/stale/EOF transitions, source labels, create-new preservation and non-loopback refusal. Original UDP/control tests still passed.
+- `node groundstation/tests/dashboard_runtime.cjs`: passed dashboard logic tests using a DOM/canvas test double, including timeline/Play, separate planned/predicted drawing data, rates-only suppression, invalid/stale clearing, malicious metadata, full-u64 timestamp labels and extreme finite positions.
+- The root integration pass subsequently used actual headless Chromium: desktop/mobile offline replay, Play/timeline, valid/invalid display, live stale/resume/EOF transitions and byte-identical 600-packet capture passed without browser JavaScript errors. Screenshots and evidence locations are recorded in `docs/verification.md`.
+- `examples/predictions-trajectory.jsonl` is deterministic handwritten interface test data. It demonstrates display behavior; it is not a trained model prediction or an accuracy result.
+
+The complete root `scripts/check.py --neural` passed, including the Python-neural-export-to-Rust check. The existing noisy-image limitation remains explicitly reported. No physical aircraft, physical controller, PX4 runtime, HLS synthesis or FPGA prediction execution was tested by this change.

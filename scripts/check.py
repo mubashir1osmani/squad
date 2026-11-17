@@ -100,11 +100,40 @@ def check_integration(groundstation):
     print(f"Reports saved to {output.relative_to(ROOT)}", flush=True)
 
 
+def check_neural(groundstation):
+    """Train a labelled fixture model and verify Python-to-Rust capture."""
+    run(sys.executable, "-m", "unittest", "discover", "-s", "nn/tests", "-v")
+    parent = BUILD / "neural-integration"
+    parent.mkdir(parents=True, exist_ok=True)
+    evidence = Path(tempfile.mkdtemp(prefix="run-", dir=parent))
+    demo = evidence / "demo"
+    run(sys.executable, "-m", "nn", "groundstation-demo", "--output", demo)
+    captured = evidence / "captured.jsonl"
+    dashboard = evidence / "dashboard.html"
+    run(groundstation, "predictions", "--input", demo / "predictions.jsonl",
+        "--capture", captured, "--dashboard", dashboard)
+    expected = [json.loads(line) for line in
+                (demo / "predictions.jsonl").read_text().splitlines()]
+    actual = [json.loads(line) for line in captured.read_text().splitlines()]
+    require(actual == expected, "Ground station altered or lost neural predictions")
+    require(any(packet["prediction_valid"] and packet["predictions"][0]["position_m"]
+                is not None for packet in actual), "Demo did not produce a neural path")
+    require(any(not packet["prediction_valid"] for packet in actual),
+            "Demo did not preserve invalid/warmup anchors")
+    require(all(packet["source_kind"] == "software_fixture" for packet in actual),
+            "Synthetic provenance was lost")
+    require(dashboard.is_file() and dashboard.stat().st_size > 1000,
+            "Ground-station dashboard was not generated")
+    print(f"Neural capture and dashboard verified: {evidence.relative_to(ROOT)}", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gamepad", action="store_true", help="Also test optional gilrs support")
     parser.add_argument("--strict-noise", action="store_true",
                         help="Return failure for the documented noisy-motion limitation")
+    parser.add_argument("--neural", action="store_true",
+                        help="Also test neural inference, train a synthetic demo, and capture its path")
     options = parser.parse_args()
     for component in ("simulation", "vision"):
         directory = BUILD / component
@@ -127,7 +156,10 @@ def main():
     metadata = json.loads(subprocess.check_output(
         ["cargo", "metadata", "--locked", "--no-deps", "--format-version", "1",
          "--manifest-path", str(MANIFEST)], cwd=ROOT, text=True))
-    check_integration(Path(metadata["target_directory"]) / "debug" / "quad-groundstation")
+    groundstation = Path(metadata["target_directory"]) / "debug" / "quad-groundstation"
+    check_integration(groundstation)
+    if options.neural:
+        check_neural(groundstation)
     if options.strict_noise:
         print("FAIL: strict mode includes the known image_noise limitation", file=sys.stderr)
         return 1

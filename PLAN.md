@@ -10,6 +10,21 @@ Build a PS4-controlled quadcopter using PX4 for stabilization and an onboard FPG
 
 Languages: C++ for vision and replay tools; Rust for ground-station software. C++ HLS is the intended FPGA path, subject to board and camera selection. HDL integration may be needed. No neural network is required for the first version.
 
+### Neural forecasting extension (2026-11-16)
+
+The desktop scope now also includes Python/Keras/PyTorch neural forecasting,
+consolidated under `nn/`, and read-only prediction capture/display in the Rust
+ground station. The original rate model remains a body-rate forecaster. A
+separate trajectory architecture forecasts position, velocity and rates given
+current state and a causally available intended route. An actual trained
+synthetic fixture model exercises that path end to end.
+
+The ground station shows intended route and NN-predicted motion separately;
+neural output is not an autonomous route planner or flight command. Real-flight
+trajectory training, physical sensors/vehicle transport, hls4ml conversion,
+FPGA synthesis and onboard validation remain pending. The later hardware gates
+below still apply.
+
 Current planning allowances, excluding the FPGA and before tax/shipping: CAD 350–605 for manual flight plus onboard camera/FPGA integration hardware, or CAD 235–415 with a suitable radio set and charger borrowed. Range sensing for assisted hover adds CAD 20–40. These assume an existing laptop, PS4 controller, printer access, and basic tools; exact compatibility and the user's spending cap remain unresolved. See SCOPE.md for caveats and itemized costs. Purchases are staged; no hardware purchases are authorized by this plan.
 
 ## Phase 1: Simulation and PS4 control
